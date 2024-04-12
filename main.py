@@ -105,8 +105,8 @@ def main():
 
     player_turn = random.choice((-1,1))
 
-    player_1 = get_player_class("Human", "Nikos", player_turn)
-    player_2 = get_player_class("Human", "Botakis", -player_turn)
+    player_1 = get_player_class("Bot", "Nikos", player_turn)
+    player_2 = get_player_class("Bot", "Botakis", -player_turn)
 
     while running:
         for event in pygame.event.get():
