@@ -1,25 +1,25 @@
 import random
 
 class Player:
-    def __init__(self, name:str, turn:int) -> None:
+    def __init__(self, name:str, turn:int, player_number:int) -> None:
         self.name = name
         self.turn = turn
+        self.player_number = player_number
 
     def move(self, board_arr) -> None:
         raise NotImplementedError("Implement by child class [Player].")
 
 class HumanPlayer(Player):
-    def __init__(self, name:str, turn:int) -> None:
-        self.name = name
-        self.turn = turn
+    def __init__(self, name: str, turn: int, player_number:int) -> None:
+        super().__init__(name, turn, player_number)
 
     def move(self, board_arr) -> None:
         raise NotImplementedError("Implement by child class [Player].")
 
 
 class BotPlayer(Player):
-    def __init__(self, name: str, turn: int) -> None:
-        super().__init__(name, turn)
+    def __init__(self, name: str, turn: int, player_number:int) -> None:
+        super().__init__(name, turn, player_number)
 
     '''
     return the column where the bot player 

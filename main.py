@@ -2,9 +2,10 @@ import pygame
 import math 
 import numpy as np
 import random
-import time
+from tqdm import tqdm
 from dataclasses import dataclass
 from Classes.Bot import HumanPlayer, BotPlayer
+from logger import read_from_file, update_file
 
 pygame.init()
 
@@ -18,6 +19,9 @@ BUFFER_PIXELS_Y = 13
 
 DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
+
+global PLAYER_1_WINS
+global PLAYER_2_WINS
 
 PIECE_IMAGES = { 1 : pygame.image.load('Images/red_disk.png'), -1 : pygame.image.load('Images/yellow_disk.png')}
 PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
@@ -55,7 +59,7 @@ class Game():
         x_coord = col*PIECE_DIMENSIONS[0] + START_PIXELS_X + col*BUFFER_PIXELS_X
         y_coord = (y_row*PIECE_DIMENSIONS[0]) + START_PIXELS_Y + y_row*BUFFER_PIXELS_Y
 
-        print(x_coord, y_coord)
+        #print(x_coord, y_coord)
         piece = Piece(turn=turn, coords=(x_coord,y_coord))
         self.PLACED_PIECES.append(piece)
         self.BOARD_ARRAY[y_row][col]=1
@@ -94,11 +98,11 @@ class Game():
 
         return False
 
-    def get_player_class(self, class_string, name, turn):
+    def get_player_class(self, class_string, name, turn, number):
         if class_string == 'Human':
-            return HumanPlayer(name=name, turn=turn)
+            return HumanPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'Bot':
-            return BotPlayer(name=name, turn=turn)
+            return BotPlayer(name=name, turn=turn, player_number=number)
 
     def main(self):
         running = True
@@ -106,8 +110,8 @@ class Game():
 
         player_turn = random.choice((-1,1))
 
-        player_1 = self.get_player_class("Human", "Nikos", player_turn)
-        player_2 = self.get_player_class("Bot", "Botakis", -player_turn)
+        player_1 = self.get_player_class("Bot", "Nikos", player_turn, 1)
+        player_2 = self.get_player_class("Bot", "Botakis", -player_turn, 2)
         print(player_1.__class__.__name__)
         print(player_2.__class__.__name__)
             
@@ -144,7 +148,15 @@ class Game():
         
             running = not self.check_win(turn=-turn)
             if not running:
-                print(f"{current_player.name} won !")
+                p1, p2 = read_from_file("counters.txt")
+                #print(f"{current_player.name} won !")
+                if current_player.player_number == 1:
+                    p1 +=1 
+                else:
+                    p2 +=1 
+                update_file("counters.txt", p1, p2)
+
+
 
             DISPLAY.fill('white')
             self.render_board()
@@ -154,6 +166,12 @@ class Game():
 
 
 if __name__ == "__main__":
-    game = Game()
+    N = 500 # games 
 
-    game.main()
+    for i in tqdm(range(N)):
+        game = Game()
+        game.main()
+    
+    p1, p2 = read_from_file("counters.txt")
+
+    print(f"For {N} games: \nPlayer 1 won: {p1} times\nPlayer 2 won: {p2} times")
