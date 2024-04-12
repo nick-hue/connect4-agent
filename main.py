@@ -1,18 +1,20 @@
 import pygame 
 import math 
 import numpy as np
+import random
 from dataclasses import dataclass
+from Classes.Bot import Bot
 
 pygame.init()
 
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024, 824
+COLUMN_WIDTH = DISPLAY_DIMENSION[0]/7
+print(COLUMN_WIDTH)
 START_PIXELS_X = 25 
 START_PIXELS_Y = 34 
 BUFFER_PIXELS_X = 33
 BUFFER_PIXELS_Y = 13
-
-BUFFER_PIXELS = 40                #   PIXELS TO BUFFER BETWEEN COLUMN 
 
 DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
@@ -55,9 +57,14 @@ def place_piece(turn, col):
     PLACED_PIECES.append(piece)
     BOARD_ARRAY[y_row][col]=1
 
+def access_board() -> bool:
+    board_full = (BOARD_ARRAY==1).all()
+
 
 running = True
 turn = 1
+player_turn = random.choice((-1,1))
+bot_player = Bot(turn=-player_turn)
 
 while running:
     for event in pygame.event.get():
@@ -65,16 +72,22 @@ while running:
             pygame.quit()
             running = False
 
-        if event.type==pygame.MOUSEBUTTONDOWN:
-            print(f"x : {event.pos[0]} , y : {event.pos[1]}")
-            col = math.floor((event.pos[0]-START_PIXELS_X)/PIECE_DIMENSIONS[0])
+        if turn == player_turn:
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                print(f"x : {event.pos[0]} , y : {event.pos[1]}")
+                col = math.floor(event.pos[0]/COLUMN_WIDTH)
 
-            print("Insert at col ", col)
-            if 0 <= col < 7:
-                if BOARD_ARRAY[0, col]==0:
-                    place_piece(turn, col)
-                    print(f"Turn {turn} | Col : {col} | Board \n{BOARD_ARRAY}")
-                    turn = -turn
+                print("Insert at col ", col)
+                if 0 <= col < 7:
+                    if BOARD_ARRAY[0, col]==0:
+                        place_piece(turn, col)
+                        print(f"Turn {turn} | Col : {col} | Board \n{BOARD_ARRAY}")
+                        turn = -turn
+        
+        elif turn == bot_player.turn:
+            col = bot_player.move(BOARD_ARRAY)  
+            place_piece(turn, col)
+            turn = -turn            
         
 
     DISPLAY.fill('white')
