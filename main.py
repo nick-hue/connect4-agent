@@ -92,10 +92,10 @@ def check_win(turn) -> bool:
 
     return False
 
-def get_player_class(class_string, name, turn):
-    if class_string == 'Human':
+def get_player_class(type, name, turn):
+    if type == 'Human':
         return HumanPlayer(name=name, turn=turn)
-    elif class_string == 'Bot':
+    elif type == 'Bot':
         return BotPlayer(name=name, turn=turn)
 
 
@@ -104,9 +104,9 @@ def main():
     turn = 1
 
     player_turn = random.choice((-1,1))
-
-    player_1 = get_player_class("Bot", "Nikos", player_turn)
-    player_2 = get_player_class("Bot", "Botakis", -player_turn)
+    
+    player_1 = get_player_class(type="Human", name="Nikos", turn=player_turn)
+    player_2 = get_player_class(type="Bot", name="Botakis", turn=-player_turn)
 
     while running:
         for event in pygame.event.get():
