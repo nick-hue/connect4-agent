@@ -2,15 +2,15 @@ import pygame
 import math 
 import numpy as np
 import random
+import time
 from dataclasses import dataclass
-from Classes.Bot import Bot
+from Classes.Bot import HumanPlayer, BotPlayer
 
 pygame.init()
 
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024, 824
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]/7
-print(COLUMN_WIDTH)
 START_PIXELS_X = 25 
 START_PIXELS_Y = 34 
 BUFFER_PIXELS_X = 33
@@ -24,6 +24,7 @@ PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
 BOARD_IMAGE = pygame.image.load('Images/board_image.png')
 
 BOARD_ARRAY = np.zeros(tuple(reversed(list(BOARD_DIMENSIONS))))
+BOARD_ARRAY_CHECK = np.zeros(tuple(reversed(list(BOARD_DIMENSIONS))))
 REVERSED_INDS = list(reversed(list(range(6))))
 PLACED_PIECES = []
 
@@ -41,10 +42,10 @@ def render_pieces():
 
 def place_piece(turn, col):
     sum_col = sum(BOARD_ARRAY[:, col])
-    print("sum col", sum_col)
+    
+    y_row = -1
 
     if sum_col == 0:
-        print("here")
         y_row = BOARD_ARRAY.shape[0]-1
     else:
         y_row = BOARD_ARRAY[:, col].argmax()-1
@@ -56,43 +57,95 @@ def place_piece(turn, col):
     piece = Piece(turn=turn, coords=(x_coord,y_coord))
     PLACED_PIECES.append(piece)
     BOARD_ARRAY[y_row][col]=1
+    BOARD_ARRAY_CHECK[y_row][col]=turn
 
-def access_board() -> bool:
-    board_full = (BOARD_ARRAY==1).all()
+def check_end() -> bool:
+    return not (BOARD_ARRAY==1).all()
+
+def check_win(turn) -> bool:
+    # Horizontal check
+    for row in range(BOARD_ARRAY_CHECK.shape[0]):
+        for col in range(BOARD_ARRAY_CHECK.shape[1] - 3):
+            if BOARD_ARRAY_CHECK[row][col] == turn and all(BOARD_ARRAY_CHECK[row][col+i] == turn for i in range(4)):
+                return True
+
+    # Vertical check
+    for col in range(BOARD_ARRAY_CHECK.shape[1]):
+        for row in range(BOARD_ARRAY_CHECK.shape[0] - 3):
+            if BOARD_ARRAY_CHECK[row][col] == turn and all(BOARD_ARRAY_CHECK[row+i][col] == turn for i in range(4)):
+                return True
+
+    # Positive diagonal check
+    for col in range(BOARD_ARRAY_CHECK.shape[1] - 3):
+        for row in range(3, BOARD_ARRAY_CHECK.shape[0]):
+            if BOARD_ARRAY_CHECK[row][col] == turn and all(BOARD_ARRAY_CHECK[row-i][col+i] == turn for i in range(4)):
+                return True
+
+    # Negative diagonal check
+    for col in range(BOARD_ARRAY_CHECK.shape[1] - 3):
+        for row in range(BOARD_ARRAY_CHECK.shape[0] - 3):
+            if BOARD_ARRAY_CHECK[row][col] == turn and all(BOARD_ARRAY_CHECK[row+i][col+i] == turn for i in range(4)):
+                return True
+
+    if check_end():
+        return False
+
+    return False
+
+def get_player_class(class_string, name, turn):
+    if class_string == 'Human':
+        return HumanPlayer(name=name, turn=turn)
+    elif class_string == 'Bot':
+        return BotPlayer(name=name, turn=turn)
 
 
-running = True
-turn = 1
-player_turn = random.choice((-1,1))
-bot_player = Bot(turn=-player_turn)
+def main():
+    running = True
+    turn = 1
 
-while running:
-    for event in pygame.event.get():
-        if event.type==pygame.QUIT:
-            pygame.quit()
-            running = False
+    player_turn = random.choice((-1,1))
 
-        if turn == player_turn:
-            if event.type==pygame.MOUSEBUTTONDOWN:
-                print(f"x : {event.pos[0]} , y : {event.pos[1]}")
-                col = math.floor(event.pos[0]/COLUMN_WIDTH)
+    player_1 = get_player_class("Human", "Nikos", player_turn)
+    player_2 = get_player_class("Human", "Botakis", -player_turn)
 
-                print("Insert at col ", col)
-                if 0 <= col < 7:
-                    if BOARD_ARRAY[0, col]==0:
-                        place_piece(turn, col)
-                        print(f"Turn {turn} | Col : {col} | Board \n{BOARD_ARRAY}")
-                        turn = -turn
-        
-        elif turn == bot_player.turn:
-            col = bot_player.move(BOARD_ARRAY)  
-            place_piece(turn, col)
-            turn = -turn            
-        
+    while running:
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                running = False
 
-    DISPLAY.fill('white')
-    render_board()
-    render_pieces()
-    pygame.display.flip()
-    CLOCK.tick(60)
+            current_player = player_1 if player_1.turn == turn else player_2 # get the current player
+            # print(current_player.__class__.__name__)
 
+            if current_player.__class__.__name__ == "HumanPlayer":
+                if event.type==pygame.MOUSEBUTTONDOWN:
+                    #print(f"x : {event.pos[0]} , y : {event.pos[1]}")
+                    col = math.floor(event.pos[0]/COLUMN_WIDTH)
+
+                    #print("Insert at col ", col)
+                    if 0 <= col < 7:
+                        if BOARD_ARRAY[0, col]==0:
+                            place_piece(turn, col)
+                            print(f"Turn {turn} | Col : {col} | Board \n{BOARD_ARRAY_CHECK}")
+                            turn = -turn
+
+            elif current_player.__class__.__name__ == "BotPlayer":
+                col = current_player.move(BOARD_ARRAY)  
+                place_piece(turn, col)
+                turn = -turn            
+            
+            else: 
+                print("Invalid player class.")
+                running = False
+    
+        running = not check_win(turn=-turn)
+        if not running:
+            print(f"{current_player.name} won !")
+
+        DISPLAY.fill('white')
+        render_board()
+        render_pieces()
+        pygame.display.flip()
+        CLOCK.tick(60)
+
+main()

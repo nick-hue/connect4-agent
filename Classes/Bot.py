@@ -8,6 +8,15 @@ class Player:
     def move(self, board_arr) -> None:
         raise NotImplementedError("Implement by child class [Player].")
 
+class HumanPlayer(Player):
+    def __init__(self, name:str, turn:int) -> None:
+        self.name = name
+        self.turn = turn
+
+    def move(self, board_arr) -> None:
+        raise NotImplementedError("Implement by child class [Player].")
+
+
 class BotPlayer(Player):
     def __init__(self, name: str, turn: int) -> None:
         super().__init__(name, turn)
