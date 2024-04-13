@@ -3,7 +3,8 @@ import numpy as np
 import torch
 from collections import deque 
 import copy
-from tensorflow.keras.models import load_model
+import tensorflow as tf
+from kaggle_environments import evaluate, make
 
 class Player:
     def __init__(self, name:str, turn:int, player_number:int) -> None:
@@ -35,7 +36,36 @@ class BotPlayer(Player):
         return random.choice(available_moves) 
     
 
-class DQLearning(Player):
+class DeepModel(tf.keras.Model):
+    def __init__(self, num_states, hidden_units, num_actions):
+        super(DeepModel, self).__init__()
+        self.input_layer = tf.keras.layers.InputLayer(input_shape=(num_states,))
+        self.hidden_layers = []
+        for i in hidden_units:
+            self.hidden_layers.append(tf.keras.layers.Dense(
+                i, activation='sigmoid', kernel_initializer='RandomNormal'))
+        self.output_layer = tf.keras.layers.Dense(
+            num_actions, activation='linear', kernel_initializer='RandomNormal')
+
+#     @tf.function
+    def call(self, inputs):
+        z = self.input_layer(inputs)
+        for layer in self.hidden_layers:
+            z = layer(z)
+        output = self.output_layer(z)
+        return output
+
+
+# num_states = env.observation_space.n + 1 # 43
+# num_actions = env.action_space.n # 7
+hidden_units = [100, 200, 200, 100]
+gamma = 0.99
+lr = 1e-2
+batch_size = 32
+max_experiences = 10000
+min_experiences = 100
+
+class DQN:
     def __init__(self, num_states, num_actions, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr):
         self.num_actions = num_actions
         self.batch_size = batch_size
@@ -77,14 +107,20 @@ class DQLearning(Player):
 
     # Get an action by using epsilon-greedy
     def get_action(self, state, epsilon):
-        if np.random.random() < epsilon:
-            return int(np.random.choice([c for c in range(self.num_actions) if state.board[c] == 0]))
-        else:
-            prediction = self.predict(np.atleast_2d(self.preprocess(state)))[0].numpy()
-            for i in range(self.num_actions):
-                if state.board[i] != 0:
-                    prediction[i] = -1e7
-            return int(np.argmax(prediction))
+        # if np.random.random() < epsilon:
+        #     return int(np.random.choice([c for c in range(self.num_actions) if state.board[c] == 0]))
+        # else:
+        #     prediction = self.predict(np.atleast_2d(self.preprocess(state)))[0].numpy()
+        #     for i in range(self.num_actions):
+        #         if state.board[i] != 0:
+        #             prediction[i] = -1e7
+        #     return int(np.argmax(prediction))
+
+        prediction = self.predict(np.atleast_2d(self.preprocess(state)))[0].numpy()
+        for i in range(self.num_actions):
+            if state.board[i] != 0:
+                prediction[i] = -1e7
+        return int(np.argmax(prediction))
 
     # Method used to manage the buffer
     def add_experience(self, exp):
@@ -120,3 +156,47 @@ class DQLearning(Player):
         result.append(state.mark)
 
         return result
+
+def create_model(input_shape, num_actions):
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.InputLayer(input_shape=input_shape),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(num_actions, activation='linear')  # Assuming a direct output to action space
+    ])
+    return model
+
+
+class DQLearning:
+    def __init__(self, name, turn, player_number, filepath, model):
+        self.name = name
+        self.turn = turn
+        self.player_number = player_number
+
+        self.model = model
+        self.model.load_weights(filepath)  # Load the pre-trained model
+
+    def predict_move(self, board_state):
+        print("Original board state:", board_state)
+        board_state = board_state.flatten()
+        board_state = np.expand_dims(board_state, axis=0)  # Ensure input shape is correct
+        print("Processed board state for prediction:", board_state)
+
+        predictions = self.model.predict(board_state)[0]
+        print("Model predictions:", predictions)
+
+        legal_moves = (board_state[0] == 0)  # Check which columns are available for a move
+        predictions[legal_moves == False] = -1e7  # Invalidate moves in full columns
+        chosen_move = np.argmax(predictions)
+        print("Chosen column:", chosen_move)
+        return chosen_move
+    
+    def load_weights(self, path):
+        ref_model = tf.keras.Sequential()
+
+        ref_model.add(self.model.input_layer)
+        for layer in self.model.hidden_layers:
+            ref_model.add(layer)
+        ref_model.add(self.model.output_layer)
+
+        ref_model.load_weights(path)

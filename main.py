@@ -3,7 +3,7 @@ import math
 import numpy as np
 import random
 from dataclasses import dataclass
-from Classes.Bot import HumanPlayer, BotPlayer, DQLearning
+from Classes.Bot import HumanPlayer, BotPlayer, DQLearning, create_model, DQN
 
 pygame.init()
 
@@ -14,6 +14,14 @@ START_PIXELS_X = 25
 START_PIXELS_Y = 34 
 BUFFER_PIXELS_X = 33
 BUFFER_PIXELS_Y = 13
+
+hidden_units = [100, 200, 200, 100]
+gamma = 0.99
+lr = 1e-2
+batch_size = 32
+max_experiences = 10000
+min_experiences = 100
+epsilon = 0.99
 
 DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
@@ -63,7 +71,7 @@ class Game():
         piece = Piece(turn=turn, coords=(x_coord,y_coord))
         self.PLACED_PIECES.append(piece)
         self.BOARD_ARRAY[y_row][col]=1
-        self.BOARD_ARRAY_CHECK[y_row][col]=turn
+        self.BOARD_ARRAY_CHECK[y_row][col] = 1 if turn==1 else 2
 
     def check_end(self) -> bool:
         return (self.BOARD_ARRAY==1).all()
@@ -104,7 +112,12 @@ class Game():
         elif class_string == 'Bot':
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'DQAgent':
-            return DQLearning(name=name, turn=turn, player_number=number, filepath="weights.h5")
+            model = create_model(input_shape=(42,), num_actions=7)
+            return DQLearning(name=name, turn=turn, player_number=number, filepath="weights.h5", model=model)
+        elif class_string == 'DQN':
+            model = DQN(43, 7, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr)
+            model.load_weights("weights.h5")
+            return model
 
     def main(self):
         running = True
@@ -113,7 +126,7 @@ class Game():
         player_turn = random.choice((-1,1))
 
         player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
-        player_2 = self.get_player_class("Human", "Botakis", -player_turn, 2)
+        player_2 = self.get_player_class("DQN", "Botakis", -player_turn, 2)
         print(f"Now playing: {player_1.__class__.__name__} vs {player_2.__class__.__name__}")
             
         while running:
@@ -142,8 +155,17 @@ class Game():
                     self.place_piece(turn, col)
                     turn = -turn
                     # pygame.time.wait()
+
                 elif current_player.__class__.__name__ == "DQLearning":
+                    print('here')
                     col = current_player.predict_move(self.BOARD_ARRAY_CHECK)
+                    self.place_piece(turn, col)
+                    turn = -turn
+
+                elif current_player.__class__.__name__ == "DQN":
+                    print('here')
+                    print(type(np.array(self.BOARD_ARRAY_CHECK, dtype=float)))
+                    col = current_player.get_action(np.array(self.BOARD_ARRAY_CHECK, dtype=float), 0.99)
                     self.place_piece(turn, col)
                     turn = -turn
 
@@ -154,10 +176,7 @@ class Game():
         
             running = not self.check_win(turn=-turn)
             if not running:
-                if current_player.player_number == 1:
-                    PLAYER_1_WINS += 1 
-                else:
-                    PLAYER_2_WINS += 1 
+                print(f"{current_player.name} wins!")
                     
             DISPLAY.fill('white')
             self.render_board()
