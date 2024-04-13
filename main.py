@@ -3,28 +3,24 @@ import math
 import numpy as np
 import random
 from dataclasses import dataclass
-from Bot import HumanPlayer, BotPlayer, DQLearning, create_model, DQNAgent
+from Bot import HumanPlayer, BotPlayer, DQNAgent
+import time 
+from tkinter import *
+from tkinter import messagebox
 
 pygame.init()
 
 BOARD_DIMENSIONS = (7,6) # columns, rows
-DISPLAY_DIMENSION = 1024, 824
+DISPLAY_DIMENSION = 1024, 1024
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]/7
 START_PIXELS_X = 25 
 START_PIXELS_Y = 34 
 BUFFER_PIXELS_X = 33
 BUFFER_PIXELS_Y = 13
 
-hidden_units = [100, 200, 200, 100]
-gamma = 0.99
-lr = 1e-2
-batch_size = 32
-max_experiences = 10000
-min_experiences = 100
-epsilon = 0.99
-
 DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
+FONT = pygame.font.SysFont("monospace", 32)
 
 PIECE_IMAGES = { 1 : pygame.image.load('Images/red_disk.png'), -1 : pygame.image.load('Images/yellow_disk.png')}
 PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
@@ -48,6 +44,10 @@ class Game():
     def render_pieces(self):
         for piece in self.PLACED_PIECES:
             DISPLAY.blit(PIECE_IMAGES[piece.turn], piece.coords)
+
+    def render_text(self, display_string):
+        label = FONT.render(display_string, 1, 'black')
+        DISPLAY.blit(label, (100, 900))
 
     def place_piece(self, turn, col):
         sum_col = sum(self.BOARD_ARRAY[:, col])
@@ -107,12 +107,8 @@ class Game():
             return HumanPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'Bot':
             return BotPlayer(name=name, turn=turn, player_number=number)
-        elif class_string == 'DQAgent':
-            model = create_model(input_shape=(42,), num_actions=7)
-            return DQLearning(name=name, turn=turn, player_number=number, filepath="weights.h5", model=model)
         elif class_string == 'DQNAgent':
-            model = DQNAgent(name=name, turn=turn, player_number=number)
-            return model
+            return DQNAgent(name=name, turn=turn, player_number=number)
 
     def main(self):
         running = True
@@ -122,8 +118,10 @@ class Game():
 
         player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
         player_2 = self.get_player_class("DQNAgent", "Botakis", -player_turn, 2)
-        print(f"Now playing: {player_1.__class__.__name__} vs {player_2.__class__.__name__}")
-            
+        
+        playing_string = f"{player_1.__class__.__name__} - {player_1.name} vs {player_2.__class__.__name__} - {player_2.name}"
+        print(playing_string)
+
         while running:
             for event in pygame.event.get():
                 if event.type==pygame.QUIT:
@@ -153,11 +151,10 @@ class Game():
                 elif current_player.__class__.__name__ == "DQNAgent":
                     observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
                     configuration = {'columns': 7}
-                    
+
                     col = current_player.predict(observation, configuration)
                     self.place_piece(turn, col)
                     turn = -turn
-
 
                 else: 
                     print("Invalid player class.")
@@ -165,11 +162,18 @@ class Game():
         
             running = not self.check_win(turn=-turn)
             if not running:
-                print(f"{current_player.name} wins!")
+                winning_string = f"{current_player.name} wins!"
+                print(winning_string)
+                self.render_pieces()
+                pygame.display.flip()
+                CLOCK.tick(60)
+                Tk().wm_withdraw() #to hide the main window
+                messagebox.showinfo('Game is over',winning_string)
                     
             DISPLAY.fill('white')
             self.render_board()
             self.render_pieces()
+            self.render_text(playing_string)
             pygame.display.flip()
             CLOCK.tick(60)
 
