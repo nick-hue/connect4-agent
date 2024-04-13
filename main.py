@@ -2,10 +2,8 @@ import pygame
 import math 
 import numpy as np
 import random
-from tqdm import tqdm
 from dataclasses import dataclass
-from Classes.Bot import HumanPlayer, BotPlayer
-import logger
+from Classes.Bot import HumanPlayer, BotPlayer, DQLearning
 
 pygame.init()
 
@@ -105,6 +103,8 @@ class Game():
             return HumanPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'Bot':
             return BotPlayer(name=name, turn=turn, player_number=number)
+        elif class_string == 'DQAgent':
+            return DQLearning(name=name, turn=turn, player_number=number, filepath="weights.h5")
 
     def main(self):
         running = True
@@ -112,10 +112,9 @@ class Game():
 
         player_turn = random.choice((-1,1))
 
-        player_1 = self.get_player_class("Bot", "Nikos", player_turn, 1)
-        player_2 = self.get_player_class("Bot", "Botakis", -player_turn, 2)
-        print(player_1.__class__.__name__)
-        print(player_2.__class__.__name__)
+        player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
+        player_2 = self.get_player_class("Human", "Botakis", -player_turn, 2)
+        print(f"Now playing: {player_1.__class__.__name__} vs {player_2.__class__.__name__}")
             
         while running:
             for event in pygame.event.get():
@@ -143,6 +142,11 @@ class Game():
                     self.place_piece(turn, col)
                     turn = -turn
                     # pygame.time.wait()
+                elif current_player.__class__.__name__ == "DQLearning":
+                    col = current_player.predict_move(self.BOARD_ARRAY_CHECK)
+                    self.place_piece(turn, col)
+                    turn = -turn
+
 
                 else: 
                     print("Invalid player class.")
@@ -163,10 +167,5 @@ class Game():
 
 
 if __name__ == "__main__":
-    N = 5 # games 
-    
-    for i in tqdm(range(N)):
-        game = Game()
-        game.main()
-    
-    print(f"For {N} games: \nPlayer 1 won: {PLAYER_1_WINS} times\nPlayer 2 won: {PLAYER_2_WINS} times")
+    game = Game()
+    game.main()
