@@ -5,7 +5,7 @@ import random
 from tqdm import tqdm
 from dataclasses import dataclass
 from Classes.Bot import HumanPlayer, BotPlayer
-from logger import read_from_file, update_file
+import logger
 
 pygame.init()
 
@@ -21,7 +21,9 @@ DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
 
 global PLAYER_1_WINS
+PLAYER_1_WINS = 0 
 global PLAYER_2_WINS
+PLAYER_2_WINS = 0
 
 PIECE_IMAGES = { 1 : pygame.image.load('Images/red_disk.png'), -1 : pygame.image.load('Images/yellow_disk.png')}
 PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
@@ -148,16 +150,11 @@ class Game():
         
             running = not self.check_win(turn=-turn)
             if not running:
-                p1, p2 = read_from_file("counters.txt")
-                #print(f"{current_player.name} won !")
                 if current_player.player_number == 1:
-                    p1 +=1 
+                    PLAYER_1_WINS += 1 
                 else:
-                    p2 +=1 
-                update_file("counters.txt", p1, p2)
-
-
-
+                    PLAYER_2_WINS += 1 
+                    
             DISPLAY.fill('white')
             self.render_board()
             self.render_pieces()
@@ -166,12 +163,10 @@ class Game():
 
 
 if __name__ == "__main__":
-    N = 500 # games 
-
+    N = 5 # games 
+    
     for i in tqdm(range(N)):
         game = Game()
         game.main()
     
-    p1, p2 = read_from_file("counters.txt")
-
-    print(f"For {N} games: \nPlayer 1 won: {p1} times\nPlayer 2 won: {p2} times")
+    print(f"For {N} games: \nPlayer 1 won: {PLAYER_1_WINS} times\nPlayer 2 won: {PLAYER_2_WINS} times")
