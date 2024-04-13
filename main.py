@@ -3,7 +3,7 @@ import math
 import numpy as np
 import random
 from dataclasses import dataclass
-from Classes.Bot import HumanPlayer, BotPlayer, DQLearning, create_model, DQN
+from Bot import HumanPlayer, BotPlayer, DQLearning, create_model, DQNAgent
 
 pygame.init()
 
@@ -25,11 +25,6 @@ epsilon = 0.99
 
 DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
-
-global PLAYER_1_WINS
-PLAYER_1_WINS = 0 
-global PLAYER_2_WINS
-PLAYER_2_WINS = 0
 
 PIECE_IMAGES = { 1 : pygame.image.load('Images/red_disk.png'), -1 : pygame.image.load('Images/yellow_disk.png')}
 PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
@@ -78,6 +73,7 @@ class Game():
 
     def check_win(self, turn) -> bool:
         # Horizontal check
+        turn = 1 if turn==1 else 2
         for row in range(self.BOARD_ARRAY_CHECK.shape[0]):
             for col in range(self.BOARD_ARRAY_CHECK.shape[1] - 3):
                 if self.BOARD_ARRAY_CHECK[row][col] == turn and all(self.BOARD_ARRAY_CHECK[row][col+i] == turn for i in range(4)):
@@ -114,9 +110,8 @@ class Game():
         elif class_string == 'DQAgent':
             model = create_model(input_shape=(42,), num_actions=7)
             return DQLearning(name=name, turn=turn, player_number=number, filepath="weights.h5", model=model)
-        elif class_string == 'DQN':
-            model = DQN(43, 7, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr)
-            model.load_weights("weights.h5")
+        elif class_string == 'DQNAgent':
+            model = DQNAgent(name=name, turn=turn, player_number=number)
             return model
 
     def main(self):
@@ -126,7 +121,7 @@ class Game():
         player_turn = random.choice((-1,1))
 
         player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
-        player_2 = self.get_player_class("DQN", "Botakis", -player_turn, 2)
+        player_2 = self.get_player_class("DQNAgent", "Botakis", -player_turn, 2)
         print(f"Now playing: {player_1.__class__.__name__} vs {player_2.__class__.__name__}")
             
         while running:
@@ -162,10 +157,10 @@ class Game():
                     self.place_piece(turn, col)
                     turn = -turn
 
-                elif current_player.__class__.__name__ == "DQN":
-                    print('here')
-                    print(type(np.array(self.BOARD_ARRAY_CHECK, dtype=float)))
-                    col = current_player.get_action(np.array(self.BOARD_ARRAY_CHECK, dtype=float), 0.99)
+                elif current_player.__class__.__name__ == "DQNAgent":
+                    observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
+                    configuration = {'columns': 7}  # As there are 7 columns in Connect4
+                    col = current_player.predict(observation, configuration)
                     self.place_piece(turn, col)
                     turn = -turn
 
