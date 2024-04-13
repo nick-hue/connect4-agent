@@ -1,8 +1,13 @@
 
-with open("counters.txt", "r") as f:
-    data = f.readline().split(",")
+import h5py
+import numpy as np
 
-p1_data, p2_data = data
 
-print(f"P1 wins : {p1_data.split(':')[1]}")
-print(f"P2 wins : {p2_data.split(':')[1]}")
+# Open the HDF5 file and read data
+file = h5py.File('weights.h5', 'r')
+print(file)
+big_array = file['dense']['deep_model']['dense']  # Load the data into memory
+print(big_array)
+
+
+file.close()

@@ -149,17 +149,11 @@ class Game():
                     col = current_player.move(self.BOARD_ARRAY)  
                     self.place_piece(turn, col)
                     turn = -turn
-                    # pygame.time.wait()
-
-                elif current_player.__class__.__name__ == "DQLearning":
-                    print('here')
-                    col = current_player.predict_move(self.BOARD_ARRAY_CHECK)
-                    self.place_piece(turn, col)
-                    turn = -turn
 
                 elif current_player.__class__.__name__ == "DQNAgent":
                     observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
-                    configuration = {'columns': 7}  # As there are 7 columns in Connect4
+                    configuration = {'columns': 7}
+                    
                     col = current_player.predict(observation, configuration)
                     self.place_piece(turn, col)
                     turn = -turn
