@@ -3,10 +3,12 @@ import math
 import numpy as np
 import random
 from dataclasses import dataclass
-from Bot import HumanPlayer, BotPlayer, DQNAgent
+from players.Bot import HumanPlayer, BotPlayer, DQNAgent
+from players.dqn_agent import DQN
 import time 
 from tkinter import *
 from tkinter import messagebox
+import torch
 
 pygame.init()
 
@@ -17,6 +19,21 @@ START_PIXELS_X = 25
 START_PIXELS_Y = 34 
 BUFFER_PIXELS_X = 33
 BUFFER_PIXELS_Y = 13
+
+gamma = 0.99
+copy_step = 25
+hidden_units = [100, 200, 200, 100]
+max_experiences = 1000
+min_experiences = 100
+batch_size = 32
+lr = 0.01
+epsilon = 0.25    # lebih memilih eksploitasi, namun decay epsilon diperlambat
+decay = 0.99
+min_epsilon = 0.05
+random_episodes = 10000
+negamax_episodes = 2000
+precision = 7
+
 
 DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
@@ -108,7 +125,9 @@ class Game():
         elif class_string == 'Bot':
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'DQNAgent':
-            return DQNAgent(name=name, turn=turn, player_number=number)
+            agent = DQN(name, turn, number, 43, 7, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr)
+            agent.load_weights("weights333.pth")
+            return agent
 
     def main(self):
         running = True
@@ -148,11 +167,16 @@ class Game():
                     self.place_piece(turn, col)
                     turn = -turn
 
-                elif current_player.__class__.__name__ == "DQNAgent":
+                elif current_player.__class__.__name__ == "DQN":
                     observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
                     configuration = {'columns': 7}
 
-                    col = current_player.predict(observation, configuration)
+                    #col = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
+                    # result = list(observation['board'][:])
+                    # result.append(observation['mark'])
+                    # inputs = np.array(result, dtype=np.float32)
+
+                    current_player.model(torch.from_numpy(current_player.preprocess(observation)).float())
                     self.place_piece(turn, col)
                     turn = -turn
 

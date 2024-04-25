@@ -3,8 +3,8 @@ import numpy as np
 from collections import deque 
 import tensorflow as tf
 from kaggle_environments import evaluate, make
-from hiddens import *  # This should include definitions for hl1_w, hl1_b, etc.
-from logger import load_tup
+#from hiddens import *  # This should include definitions for hl1_w, hl1_b, etc.
+#from logger import load_tup
 
 class Player:
     def __init__(self, name:str, turn:int, player_number:int) -> None:
@@ -38,7 +38,7 @@ class BotPlayer(Player):
 class DQNAgent(Player):
     def __init__(self, name: str, turn: int, player_number:int) -> None:
         super().__init__(name, turn, player_number)
-        self.hiddens = load_tup('arrays.npz')
+        # self.hiddens = load_tup('arrays.npz')
         
     def predict(self, observation, configuration):
         state = list(observation['board'])  # This should be the flattened game board
