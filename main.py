@@ -8,6 +8,9 @@ from players.dqn_agent import DQN
 import time 
 from tkinter import *
 from tkinter import messagebox
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
 import torch
 
 pygame.init()
@@ -27,7 +30,7 @@ max_experiences = 1000
 min_experiences = 100
 batch_size = 32
 lr = 0.01
-epsilon = 0.25    # lebih memilih eksploitasi, namun decay epsilon diperlambat
+epsilon = 0.25   
 decay = 0.99
 min_epsilon = 0.05
 random_episodes = 10000
@@ -89,6 +92,7 @@ class Game():
         return (self.BOARD_ARRAY==1).all()
 
     def check_win(self, turn) -> bool:
+        # input turn is 1 or -1
         # Horizontal check
         turn = 1 if turn==1 else 2
         for row in range(self.BOARD_ARRAY_CHECK.shape[0]):
@@ -126,7 +130,7 @@ class Game():
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'DQNAgent':
             agent = DQN(name, turn, number, 43, 7, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr)
-            agent.load_weights("weights333.pth")
+            agent.load_weights("weights4444.pth")
             return agent
 
     def main(self):
@@ -176,7 +180,12 @@ class Game():
                     # result.append(observation['mark'])
                     # inputs = np.array(result, dtype=np.float32)
 
-                    current_player.model(torch.from_numpy(current_player.preprocess(observation)).float())
+                    actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy()
+                    for i in range(len(actions)) :
+                        if observation['board'][i] != 0 :
+                            actions[i] = -1e7
+                    col = int(np.argmax(actions))
+                    print(col)
                     self.place_piece(turn, col)
                     turn = -turn
 

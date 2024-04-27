@@ -1,5 +1,4 @@
 import numpy as np                
-from tqdm.notebook import tqdm     
 import gym
 from kaggle_environments import evaluate, make
 import torch
