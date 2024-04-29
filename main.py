@@ -11,6 +11,7 @@ import torch
 
 pygame.init()
 scale_factor = 0.75
+
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024*scale_factor, 1024*scale_factor
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]*scale_factor/7
@@ -43,7 +44,7 @@ YELLOW_DISK_IMAGE = pygame.image.load('Images/yellow_disk.png')
 PIECE_IMAGES = { 1 : pygame.transform.scale(RED_DISK_IMAGE, (RED_DISK_IMAGE.get_width()*scale_factor, RED_DISK_IMAGE.get_height()*scale_factor)),\
                  -1 : pygame.transform.scale(YELLOW_DISK_IMAGE, (YELLOW_DISK_IMAGE.get_width()*scale_factor, YELLOW_DISK_IMAGE.get_height()*scale_factor))}
 
-PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width()*scale_factor, PIECE_IMAGES[1].get_height()*scale_factor
+PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
 
 BOARD_IMAGE_tmp = pygame.image.load('Images/board_image.png')
 BOARD_IMAGE = pygame.transform.scale(BOARD_IMAGE_tmp, (BOARD_IMAGE_tmp.get_width()*scale_factor, BOARD_IMAGE_tmp.get_height()*scale_factor))
@@ -158,7 +159,7 @@ class Game():
  
                 if current_player.__class__.__name__ == "HumanPlayer":
                     if event.type==pygame.MOUSEBUTTONDOWN:
-                        col = math.floor(event.pos[0]/COLUMN_WIDTH)
+                        col = math.floor(event.pos[0]*scale_factor/COLUMN_WIDTH)
 
                         if 0 <= col < 7:
                             if self.BOARD_ARRAY[0, col]==0:
@@ -205,7 +206,15 @@ class Game():
             pygame.display.flip()
             CLOCK.tick(60)
 
+def start_menu():
+    pygame.display.set_caption("Setup Menu")
+
+    MENU_MOUSE_POSITION = pygame.mouse.get_pos()
+
+    
 
 if __name__ == "__main__":
+    start_menu()
+
     game = Game()
     game.main()
