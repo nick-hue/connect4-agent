@@ -17,7 +17,7 @@ import torch
 pygame.init()
 
 # GUI VARIABLES
-scale_factor = 0.75
+scale_factor = 0.825
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024*scale_factor, 1024*scale_factor
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]*scale_factor/7
@@ -163,21 +163,28 @@ class Game():
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'Agent':
             agent = DQN(name, turn, number, 43, 7, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr)
-            agent.load_weights("weights_28_04_2024_12_01_34.pth")
+            agent.load_weights("weights_29_04_2024_14_43_25_target.pth")
             return agent
 
-    def main(self):
+    def main(self, p1, p2):
         running = True
         turn = 1
-
+        # make if no changes play human vs human
+        # make text at game appear as it should
         player_turn = random.choice((-1,1))
 
-        player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
-        player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
+        # player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
+        # player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
         
-        playing_string = f"{player_1.__class__.__name__} - {player_1.name} vs {player_2.__class__.__name__} - {player_2.name}"
+        player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
+        player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
+
+        playing_string = f"{p1.player_text}-{PLAYER_TYPES[p1.selected]} VS {p2.player_text}-{PLAYER_TYPES[p2.selected]}"
         print(playing_string)
 
+        VERSUS_TEXT = get_font(100).render(playing_string, True, color_black)
+        VERSUS_RECT = VERSUS_TEXT.get_rect(center=(DISPLAY_DIMENSION[0]/4, 7*DISPLAY_DIMENSION[0]/8))
+        
         while running:
             for event in pygame.event.get():
                 if event.type==pygame.QUIT:
@@ -233,7 +240,7 @@ class Game():
             DISPLAY.fill('white')
             self.render_board()
             self.render_pieces()
-            self.render_text(playing_string)
+            
             pygame.display.flip()
             CLOCK.tick(60)
 
@@ -279,7 +286,10 @@ def start_menu():
         player_1_input.player_select.draw(DISPLAY)
         player_1_input.input_rect.width = max(text_surface_p1.get_width() + 10, 250)
 
-        
+        vs_text = get_font(35).render("Vs", True, color_black)
+        x_vs_text = player_1_input.input_rect.x + player_1_input.input_rect.w + 35
+        y_vs_text = player_1_input.input_rect.y + 25
+        DISPLAY.blit(vs_text, (x_vs_text,y_vs_text))
 
         text_surface_p2 = get_font(35).render(player_2_input.player_text, True, color_black)
         pygame.draw.rect(DISPLAY, player_2_input.color, player_2_input.input_rect)
@@ -298,12 +308,10 @@ def start_menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if START_BUTTON.checkForInput(MENU_MOUSE_POSITION):
                     game = Game()
-                    game.main()
+                    game.main(player_1_input, player_2_input)
                 if QUIT_BUTTON.checkForInput(MENU_MOUSE_POSITION):
-                    print(f"{player_1_input.player_text}-{PLAYER_TYPES[player_1_input.selected]} VS {player_2_input.player_text}-{PLAYER_TYPES[player_2_input.selected]}")
                     pygame.quit()
                     sys.exit()
-                    
 
                 if player_1_input.input_rect.collidepoint(event.pos):
                     player_1_input.active = True
@@ -332,13 +340,9 @@ def start_menu():
                     player_2_input.player_text += event.unicode
 
         player_1_input.selected = player_1_input.player_select.update(event_list)
+        if player_1_input.selected >= 0:
+            print(player_1_input.selected)
         player_2_input.selected = player_2_input.player_select.update(event_list)
-
-        if player_1_input.selected >= 0 :
-            print(f"Player type for player1: {PLAYER_TYPES[player_1_input.selected]}")
-        if player_2_input.selected >= 0 :
-            print(f"Player type for player2: {PLAYER_TYPES[player_2_input.selected]}")
-
 
         pygame.display.update()
 
