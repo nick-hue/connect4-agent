@@ -1,17 +1,22 @@
 import pygame 
+from tkinter import *
+from tkinter import messagebox
+from button import Button
+
 import math 
 import numpy as np
+import sys
 import random
+
 from dataclasses import dataclass
 from players.Bot import HumanPlayer, BotPlayer
 from players.dqn_agent import DQN
-from tkinter import *
-from tkinter import messagebox
 import torch
 
 pygame.init()
 scale_factor = 0.75
 
+# GUI VARIABLES
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024*scale_factor, 1024*scale_factor
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]*scale_factor/7
@@ -20,6 +25,7 @@ START_PIXELS_Y = 34 * scale_factor
 BUFFER_PIXELS_X = 33 * scale_factor
 BUFFER_PIXELS_Y = 13 * scale_factor
 
+# DQN INIT VARIABLES
 gamma = 0.99
 copy_step = 25
 hidden_units = [100, 200, 200, 100]
@@ -34,19 +40,23 @@ random_episodes = 10000
 negamax_episodes = 2000
 precision = 7
 
-
+# PYGAME VARIABLES
 DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
 FONT = pygame.font.SysFont("monospace", 32)
+pygame.display.set_caption("Setup Menu")
 
-RED_DISK_IMAGE = pygame.image.load('Images/red_disk.png')
-YELLOW_DISK_IMAGE = pygame.image.load('Images/yellow_disk.png')
+# START MENU 
+MENU_BG_IMAGE_tmp = pygame.image.load('Assets/menu_background_image.png')
+MENU_BG_IMAGE = pygame.transform.scale(MENU_BG_IMAGE_tmp, (MENU_BG_IMAGE_tmp.get_width()*scale_factor, MENU_BG_IMAGE_tmp.get_height()*scale_factor))
+
+# CONNECT 4 GAME
+RED_DISK_IMAGE = pygame.image.load('Assets/red_disk.png')
+YELLOW_DISK_IMAGE = pygame.image.load('Assets/yellow_disk.png')
 PIECE_IMAGES = { 1 : pygame.transform.scale(RED_DISK_IMAGE, (RED_DISK_IMAGE.get_width()*scale_factor, RED_DISK_IMAGE.get_height()*scale_factor)),\
                  -1 : pygame.transform.scale(YELLOW_DISK_IMAGE, (YELLOW_DISK_IMAGE.get_width()*scale_factor, YELLOW_DISK_IMAGE.get_height()*scale_factor))}
-
 PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
-
-BOARD_IMAGE_tmp = pygame.image.load('Images/board_image.png')
+BOARD_IMAGE_tmp = pygame.image.load('Assets/board_image.png')
 BOARD_IMAGE = pygame.transform.scale(BOARD_IMAGE_tmp, (BOARD_IMAGE_tmp.get_width()*scale_factor, BOARD_IMAGE_tmp.get_height()*scale_factor))
 
 
@@ -54,6 +64,10 @@ BOARD_IMAGE = pygame.transform.scale(BOARD_IMAGE_tmp, (BOARD_IMAGE_tmp.get_width
 class Piece:
     turn: int
     coords: tuple
+
+def get_font(size): # Returns Press-Start-2P in the desired size
+    return pygame.font.SysFont("monospace", size)
+
 
 class Game():
     def __init__(self) -> None:
@@ -152,8 +166,10 @@ class Game():
         while running:
             for event in pygame.event.get():
                 if event.type==pygame.QUIT:
-                    pygame.quit()
                     running = False
+                    pygame.quit()
+                    sys.exit()
+
 
                 current_player = player_1 if player_1.turn == turn else player_2 # get the current player
  
@@ -207,14 +223,37 @@ class Game():
             CLOCK.tick(60)
 
 def start_menu():
-    pygame.display.set_caption("Setup Menu")
+    while True:
+        DISPLAY.blit(MENU_BG_IMAGE, (0, 0))
+        
+        MENU_MOUSE_POSITION = pygame.mouse.get_pos()
 
-    MENU_MOUSE_POSITION = pygame.mouse.get_pos()
+        START_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"), pos=(DISPLAY_DIMENSION[0]/2, DISPLAY_DIMENSION[0]/4), 
+                                text_input="START", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+        
+        QUIT_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"), pos=(DISPLAY_DIMENSION[0]/2, 3*DISPLAY_DIMENSION[0]/4), 
+                                text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+        
+        START_BUTTON.changeColor(MENU_MOUSE_POSITION)
+        START_BUTTON.update(DISPLAY)
 
-    
+        QUIT_BUTTON.changeColor(MENU_MOUSE_POSITION)
+        QUIT_BUTTON.update(DISPLAY)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if START_BUTTON.checkForInput(MENU_MOUSE_POSITION):
+                    game = Game()
+                    game.main()
+                if QUIT_BUTTON.checkForInput(MENU_MOUSE_POSITION):
+                    pygame.quit()
+                    sys.exit()
+                    
+        pygame.display.update()
+
 
 if __name__ == "__main__":
     start_menu()
-
-    game = Game()
-    game.main()
