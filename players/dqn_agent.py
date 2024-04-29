@@ -56,31 +56,39 @@ class DQN:
         if len(self.experience['s']) < self.min_experiences:
             return 0
 
-        # Random sample batches from experience replay buffer
+         # Random sample batches from experience replay buffer
         ids = np.random.randint(low=0, high=len(self.experience['s']), size=self.batch_size)
 
         # Get the states from the samples of the experience bufferand preprocess them.
-        states = torch.FloatTensor([self.preprocess(self.experience['s'][i]) for i in ids]).to(device)
+        states = np.asarray([self.preprocess(self.experience['s'][i]) for i in ids])
 
-        actions = torch.LongTensor([self.experience['a'][i] for i in ids]).to(device)  # Retrieve the actions
-        rewards = torch.FloatTensor([self.experience['r'][i] for i in ids]).to(device) # Retrieve the rewards
+        actions = np.asarray([self.experience['a'][i] for i in ids])  # Retrieve the actions
+        rewards = np.asarray([self.experience['r'][i] for i in ids])  # Retrieve the rewards
 
         # Get the next states from the samples of the experience bufferand preprocess them.
-        next_states = torch.FloatTensor([self.preprocess(self.experience['s2'][i]) for i in ids]).to(device)
-         
-        # Retrieve the 'done' flags
-        dones = torch.BoolTensor([self.experience['done'][i] for i in ids]).to(device)           
+        next_states = np.asarray([self.preprocess(self.experience['s2'][i]) for i in ids])
+        dones = np.asarray([self.experience['done'][i] for i in ids]) # Retrieve the 'done' flags
 
-        # Compute Q values
-        current_q_values = self.model(states).gather(1, actions.unsqueeze(1)).squeeze(1)
-        next_q_values = TargetNet.model(next_states).max(1)[0].detach()
-        expected_q_values = rewards + self.gamma * next_q_values * (~dones)
+        # Calculate the maximum Q-value for the next states using the target network.
+        value_next = np.max(TargetNet.predict(next_states).detach().numpy(), axis = 1)
+        # Compute the actual Q-values using the Bellman equation.
+        actual_values = np.where(dones, rewards, rewards + self.gamma * value_next)
 
+        # Make the actions table into tensor input like
+        actions = np.expand_dims(actions, axis = 1)
+        actions_one_hot = torch.FloatTensor(self.batch_size, self.num_actions).zero_()
+        actions_one_hot = actions_one_hot.scatter_(1, torch.LongTensor(actions), 1)
+
+        # Calculate the Q-values for the actions taken using the current Q-network.
+        selected_action_values = torch.sum(self.predict(states) * actions_one_hot, dim = 1)
+        actual_values = torch.FloatTensor(actual_values)
+
+        # Reset gradients before performing a backward pass.
+        self.optimizer.zero_grad()
         # Compute the loss between the predicted Q-values and the actual Q-values
-        loss = self.criterion(current_q_values, expected_q_values)
-        self.optimizer.zero_grad() # Reset gradients before performing a backward pass.
-        loss.backward()            # backpropagation
-        self.optimizer.step()      # update weights  networ
+        loss = self.criterion(selected_action_values, actual_values)
+        loss.backward()           # backpropagation
+        self.optimizer.step()     # update weights  networ
 
     def copy_weights(self, TrainNet):
         self.model.load_state_dict(TrainNet.model.state_dict())

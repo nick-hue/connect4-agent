@@ -17,7 +17,7 @@ import torch
 pygame.init()
 
 # GUI VARIABLES
-scale_factor = 0.825
+scale_factor = 0.875
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024*scale_factor, 1024*scale_factor
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]*scale_factor/7
@@ -163,7 +163,7 @@ class Game():
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'Agent':
             agent = DQN(name, turn, number, 43, 7, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr)
-            agent.load_weights("weights_29_04_2024_14_43_25_target.pth")
+            agent.load_weights("weights_29_04_2024_18_31_46.pth")
             return agent
 
     def main(self, p1, p2):
@@ -173,11 +173,11 @@ class Game():
         # make text at game appear as it should
         player_turn = random.choice((-1,1))
 
-        # player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
-        # player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
+        player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
+        player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
         
-        player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
-        player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
+        # player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
+        # player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
 
         playing_string = f"{p1.player_text}-{PLAYER_TYPES[p1.selected]} VS {p2.player_text}-{PLAYER_TYPES[p2.selected]}"
         print(playing_string)
@@ -247,6 +247,7 @@ class Game():
 
 
 def start_menu():
+    # set defaults => name as player1 player2 
     player_1_input = PlayerInput(input_rect=pygame.Rect(DISPLAY_DIMENSION[0]/8, 3*DISPLAY_DIMENSION[0]/8+100, 250, 55), \
                      player_select=OptionBox(DISPLAY_DIMENSION[0]/8, 3*DISPLAY_DIMENSION[0]/8+100+55, 250, 55, (150, 150, 150), (100, 200, 255), get_font(30), PLAYER_TYPES), \
                      color=COLOR_INACTIVE,\
@@ -287,7 +288,7 @@ def start_menu():
         player_1_input.input_rect.width = max(text_surface_p1.get_width() + 10, 250)
 
         vs_text = get_font(35).render("Vs", True, color_black)
-        x_vs_text = player_1_input.input_rect.x + player_1_input.input_rect.w + 35
+        x_vs_text = (player_1_input.input_rect.x + player_1_input.input_rect.w + player_2_input.input_rect.x)/2 - 25
         y_vs_text = player_1_input.input_rect.y + 25
         DISPLAY.blit(vs_text, (x_vs_text,y_vs_text))
 
