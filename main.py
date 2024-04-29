@@ -3,25 +3,21 @@ import math
 import numpy as np
 import random
 from dataclasses import dataclass
-from players.Bot import HumanPlayer, BotPlayer, DQNAgent
+from players.Bot import HumanPlayer, BotPlayer
 from players.dqn_agent import DQN
-import time 
 from tkinter import *
 from tkinter import messagebox
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-
 import torch
 
 pygame.init()
-
+scale_factor = 0.75
 BOARD_DIMENSIONS = (7,6) # columns, rows
-DISPLAY_DIMENSION = 1024, 1024
-COLUMN_WIDTH = DISPLAY_DIMENSION[0]/7
-START_PIXELS_X = 25 
-START_PIXELS_Y = 34 
-BUFFER_PIXELS_X = 33
-BUFFER_PIXELS_Y = 13
+DISPLAY_DIMENSION = 1024*scale_factor, 1024*scale_factor
+COLUMN_WIDTH = DISPLAY_DIMENSION[0]*scale_factor/7
+START_PIXELS_X = 25 * scale_factor
+START_PIXELS_Y = 34 * scale_factor
+BUFFER_PIXELS_X = 33 * scale_factor
+BUFFER_PIXELS_Y = 13 * scale_factor
 
 gamma = 0.99
 copy_step = 25
@@ -42,9 +38,16 @@ DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
 FONT = pygame.font.SysFont("monospace", 32)
 
-PIECE_IMAGES = { 1 : pygame.image.load('Images/red_disk.png'), -1 : pygame.image.load('Images/yellow_disk.png')}
-PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
-BOARD_IMAGE = pygame.image.load('Images/board_image.png')
+RED_DISK_IMAGE = pygame.image.load('Images/red_disk.png')
+YELLOW_DISK_IMAGE = pygame.image.load('Images/yellow_disk.png')
+PIECE_IMAGES = { 1 : pygame.transform.scale(RED_DISK_IMAGE, (RED_DISK_IMAGE.get_width()*scale_factor, RED_DISK_IMAGE.get_height()*scale_factor)),\
+                 -1 : pygame.transform.scale(YELLOW_DISK_IMAGE, (YELLOW_DISK_IMAGE.get_width()*scale_factor, YELLOW_DISK_IMAGE.get_height()*scale_factor))}
+
+PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width()*scale_factor, PIECE_IMAGES[1].get_height()*scale_factor
+
+BOARD_IMAGE_tmp = pygame.image.load('Images/board_image.png')
+BOARD_IMAGE = pygame.transform.scale(BOARD_IMAGE_tmp, (BOARD_IMAGE_tmp.get_width()*scale_factor, BOARD_IMAGE_tmp.get_height()*scale_factor))
+
 
 @dataclass
 class Piece:
@@ -130,7 +133,7 @@ class Game():
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'DQNAgent':
             agent = DQN(name, turn, number, 43, 7, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr)
-            agent.load_weights("weights4444.pth")
+            agent.load_weights("weights_28_04_2024_12_01_34.pth")
             return agent
 
     def main(self):
@@ -152,14 +155,11 @@ class Game():
                     running = False
 
                 current_player = player_1 if player_1.turn == turn else player_2 # get the current player
-                # print(current_player.__class__.__name__)
-
+ 
                 if current_player.__class__.__name__ == "HumanPlayer":
                     if event.type==pygame.MOUSEBUTTONDOWN:
-                        #print(f"x : {event.pos[0]} , y : {event.pos[1]}")
                         col = math.floor(event.pos[0]/COLUMN_WIDTH)
 
-                        #print("Insert at col ", col)
                         if 0 <= col < 7:
                             if self.BOARD_ARRAY[0, col]==0:
                                 self.place_piece(turn, col)
@@ -173,12 +173,7 @@ class Game():
 
                 elif current_player.__class__.__name__ == "DQN":
                     observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
-                    configuration = {'columns': 7}
-
-                    #col = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
-                    # result = list(observation['board'][:])
-                    # result.append(observation['mark'])
-                    # inputs = np.array(result, dtype=np.float32)
+                    # configuration = {'columns': 7}
 
                     actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy()
                     for i in range(len(actions)) :

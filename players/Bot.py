@@ -1,10 +1,4 @@
 import random
-import numpy as np
-from collections import deque 
-import tensorflow as tf
-from kaggle_environments import evaluate, make
-#from hiddens import *  # This should include definitions for hl1_w, hl1_b, etc.
-#from logger import load_tup
 
 class Player:
     def __init__(self, name:str, turn:int, player_number:int) -> None:
