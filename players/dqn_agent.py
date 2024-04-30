@@ -98,17 +98,13 @@ class DQN:
 
     def load_weights(self, path):
         self.model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
+        self.model.eval()
 
     # function to preprocess state before packaging
     def preprocess(self, state) :
         result = list(state['board'][:])
         result.append(state['mark'])
         return np.array(result, dtype=np.float32)
-
-    # def preprocess(self, state):
-    #   result = state['board'][:]
-    #   result.append(state['mark'])
-    #   return result
 
     # function for prediction
     def predict(self, inputs):

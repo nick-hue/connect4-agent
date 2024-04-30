@@ -3,13 +3,13 @@ from tkinter import *
 from tkinter import messagebox
 from button import Button
 from optionbox import OptionBox
+from dataclasses import dataclass
 
 import math 
 import numpy as np
 import sys
 import random
 
-from dataclasses import dataclass
 from players.Bot import HumanPlayer, BotPlayer
 from players.dqn_agent import DQN
 import torch
@@ -17,7 +17,7 @@ import torch
 pygame.init()
 
 # GUI VARIABLES
-scale_factor = 0.875
+scale_factor = 0.75
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024*scale_factor, 1024*scale_factor
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]*scale_factor/7
@@ -50,8 +50,10 @@ CLOCK = pygame.time.Clock()
 FONT = pygame.font.SysFont("monospace", 32)
 pygame.display.set_caption("Setup Menu")
 color_black = (0,0,0)
+color_grey = (150, 150, 150)
+
 COLOR_ACTIVE = pygame.Color('lightskyblue3')
-COLOR_INACTIVE = pygame.Color('gray15')
+COLOR_INACTIVE = pygame.Color('gray36')
 
 # START MENU 
 MENU_BG_IMAGE_tmp = pygame.image.load('Assets/menu_background_image.png')
@@ -81,7 +83,7 @@ class PlayerInput:
     player_text: str
     selected: int
 
-def get_font(size): # Returns Press-Start-2P in the desired size
+def get_font(size):
     return pygame.font.Font("assets/font.ttf", size)
 
 class Game():
@@ -169,22 +171,21 @@ class Game():
     def main(self, p1, p2):
         running = True
         turn = 1
-        # make if no changes play human vs human
-        # make text at game appear as it should
         player_turn = random.choice((-1,1))
 
-        player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
-        player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
+        # player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
+        # player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
         
-        # player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
-        # player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
+        player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
+        player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
 
         playing_string = f"{p1.player_text}-{PLAYER_TYPES[p1.selected]} VS {p2.player_text}-{PLAYER_TYPES[p2.selected]}"
         print(playing_string)
 
-        VERSUS_TEXT = get_font(100).render(playing_string, True, color_black)
-        VERSUS_RECT = VERSUS_TEXT.get_rect(center=(DISPLAY_DIMENSION[0]/4, 7*DISPLAY_DIMENSION[0]/8))
-        
+        VERSUS_TEXT = get_font(32).render(playing_string, True, color_black)
+        VERSUS_RECT = VERSUS_TEXT.get_rect(center=(DISPLAY_DIMENSION[0]/2, 7*DISPLAY_DIMENSION[0]/8))
+        DISPLAY.blit(VERSUS_TEXT, VERSUS_RECT)
+
         while running:
             for event in pygame.event.get():
                 if event.type==pygame.QUIT:
@@ -240,27 +241,25 @@ class Game():
             DISPLAY.fill('white')
             self.render_board()
             self.render_pieces()
-            
+            DISPLAY.blit(VERSUS_TEXT, VERSUS_RECT)
             pygame.display.flip()
             CLOCK.tick(60)
 
 
 
 def start_menu():
-    # set defaults => name as player1 player2 
     player_1_input = PlayerInput(input_rect=pygame.Rect(DISPLAY_DIMENSION[0]/8, 3*DISPLAY_DIMENSION[0]/8+100, 250, 55), \
-                     player_select=OptionBox(DISPLAY_DIMENSION[0]/8, 3*DISPLAY_DIMENSION[0]/8+100+55, 250, 55, (150, 150, 150), (100, 200, 255), get_font(30), PLAYER_TYPES), \
+                     player_select=OptionBox(DISPLAY_DIMENSION[0]/8, 3*DISPLAY_DIMENSION[0]/8+100+55, 250, 55, color_grey, (100, 200, 255), get_font(30), PLAYER_TYPES), \
                      color=COLOR_INACTIVE,\
                      active=False,\
-                     player_text='',
+                     player_text='Player1',
                      selected=0)
     player_2_input = PlayerInput(input_rect=pygame.Rect(5*DISPLAY_DIMENSION[0]/8-50, 3*DISPLAY_DIMENSION[0]/8+100, 250, 55), \
-                     player_select=OptionBox(5*DISPLAY_DIMENSION[0]/8-50, 3*DISPLAY_DIMENSION[0]/8+100+55, 250, 55, (150, 150, 150), (100, 200, 255), get_font(30), PLAYER_TYPES), \
+                     player_select=OptionBox(5*DISPLAY_DIMENSION[0]/8-50, 3*DISPLAY_DIMENSION[0]/8+100+55, 250, 55, color_grey, (100, 200, 255), get_font(30), PLAYER_TYPES), \
                      color=COLOR_INACTIVE,\
                      active=False,\
-                     player_text='',
+                     player_text='Player2',
                      selected=0)
-
 
     while True:
         DISPLAY.blit(MENU_BG_IMAGE, (0, 0))
@@ -309,6 +308,7 @@ def start_menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if START_BUTTON.checkForInput(MENU_MOUSE_POSITION):
                     game = Game()
+                    print(f"{player_1_input.selected}, {player_2_input.selected}")
                     game.main(player_1_input, player_2_input)
                 if QUIT_BUTTON.checkForInput(MENU_MOUSE_POSITION):
                     pygame.quit()
@@ -340,11 +340,14 @@ def start_menu():
                 else:
                     player_2_input.player_text += event.unicode
 
-        player_1_input.selected = player_1_input.player_select.update(event_list)
-        if player_1_input.selected >= 0:
-            print(player_1_input.selected)
-        player_2_input.selected = player_2_input.player_select.update(event_list)
+        tmp = player_1_input.player_select.update(event_list) 
+        if tmp >= 0:
+            player_1_input.selected = tmp
 
+        tmp = player_2_input.player_select.update(event_list)
+        if tmp >= 0:
+            player_2_input.selected = tmp
+        
         pygame.display.update()
 
 
