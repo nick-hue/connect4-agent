@@ -17,7 +17,7 @@ import torch
 pygame.init()
 
 # GUI VARIABLES
-scale_factor = 0.75
+scale_factor = 0.8125
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024*scale_factor, 1024*scale_factor
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]*scale_factor/7
@@ -29,35 +29,19 @@ BUFFER_PIXELS_Y = 13 * scale_factor
 # OPTION TYPES
 PLAYER_TYPES = ["Human", "Random Bot", "Agent"]
 
-# DQN INIT VARIABLES
-gamma = 0.99
-copy_step = 25
-hidden_units = [100, 200, 200, 100]
-max_experiences = 1000
-min_experiences = 100
-batch_size = 32
-lr = 0.01
-epsilon = 0.25   
-decay = 0.99
-min_epsilon = 0.05
-random_episodes = 10000
-negamax_episodes = 2000
-precision = 7
-
 # PYGAME VARIABLES
 DISPLAY = pygame.display.set_mode(DISPLAY_DIMENSION)
 CLOCK = pygame.time.Clock()
 FONT = pygame.font.SysFont("monospace", 32)
-pygame.display.set_caption("Setup Menu")
 color_black = (0,0,0)
 color_grey = (150, 150, 150)
-
 COLOR_ACTIVE = pygame.Color('lightskyblue3')
 COLOR_INACTIVE = pygame.Color('gray36')
 
 # START MENU 
 MENU_BG_IMAGE_tmp = pygame.image.load('Assets/menu_background_image.png')
 MENU_BG_IMAGE = pygame.transform.scale(MENU_BG_IMAGE_tmp, (MENU_BG_IMAGE_tmp.get_width()*scale_factor, MENU_BG_IMAGE_tmp.get_height()*scale_factor))
+pygame.display.set_caption("Setup Menu")
 
 # CONNECT 4 GAME
 RED_DISK_IMAGE = pygame.image.load('Assets/red_disk.png')
@@ -117,7 +101,6 @@ class Game():
         x_coord = col*PIECE_DIMENSIONS[0] + START_PIXELS_X + col*BUFFER_PIXELS_X
         y_coord = (y_row*PIECE_DIMENSIONS[0]) + START_PIXELS_Y + y_row*BUFFER_PIXELS_Y
 
-        #print(x_coord, y_coord)
         piece = Piece(turn=turn, coords=(x_coord,y_coord))
         self.PLACED_PIECES.append(piece)
         self.BOARD_ARRAY[y_row][col]=1
@@ -164,8 +147,9 @@ class Game():
         elif class_string == 'Random Bot':
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'Agent':
-            agent = DQN(name, turn, number, 43, 7, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr)
-            agent.load_weights("weights_29_04_2024_18_31_46.pth")
+            agent = DQN(name, turn, number)
+            agent.load_weights("weights_01_05_2024_14_01_48.pth")
+            agent.load_optimizer("test.pth")
             return agent
 
     def main(self, p1, p2):
@@ -193,7 +177,6 @@ class Game():
                     pygame.quit()
                     sys.exit()
 
-
                 current_player = player_1 if player_1.turn == turn else player_2 # get the current player
  
                 if current_player.__class__.__name__ == "HumanPlayer":
@@ -213,14 +196,16 @@ class Game():
 
                 elif current_player.__class__.__name__ == "DQN":
                     observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
-                    # configuration = {'columns': 7}
+                    
+                    # actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy()
+                    actions = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
+                    # print(current_player.optimizer.state_dict())
 
-                    actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy()
+                    print(actions)
                     for i in range(len(actions)) :
                         if observation['board'][i] != 0 :
                             actions[i] = -1e7
                     col = int(np.argmax(actions))
-                    print(col)
                     self.place_piece(turn, col)
                     turn = -turn
 

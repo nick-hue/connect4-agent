@@ -24,11 +24,11 @@ class DeepModel(nn.Module):
 
 # class for our Deeq Q Network
 class DQN:
-    def __init__(self, name: str, turn: int, player_number:int, num_states, num_actions, hidden_units, gamma, max_experiences, min_experiences, batch_size, lr):
+    def __init__(self, name: str, turn: int, player_number:int, num_states=43, num_actions=7, hidden_units=[100, 200, 200, 100], gamma=0.99, max_experiences=17500, min_experiences=100, batch_size=32, lr=0.001):
         self.name = name
         self.turn = turn
         self.player_number = player_number
-        
+
         self.num_actions = num_actions   # number of actions + 1 (6x7)+1 = 43
         self.gamma = gamma               # 0.99
 
@@ -56,7 +56,7 @@ class DQN:
         if len(self.experience['s']) < self.min_experiences:
             return 0
 
-         # Random sample batches from experience replay buffer
+        # Random sample batches from experience replay buffer
         ids = np.random.randint(low=0, high=len(self.experience['s']), size=self.batch_size)
 
         # Get the states from the samples of the experience bufferand preprocess them.
@@ -97,9 +97,15 @@ class DQN:
         torch.save(self.model.state_dict(), path)
 
     def load_weights(self, path):
-        self.model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
-        self.model.eval()
+        #checkpoint = torch.load(path)
+        loaded = torch.load(path)['optimizer']
+        print("Loaded", loaded)
 
+        self.model.load_state_dict(torch.load(path)['model'])
+        #self.optimizer.load_state_dict(checkpoint['optimizer'])
+
+    def load_optimizer(self, path):
+        self.optimizer.load_state_dict(torch.load(path))
     # function to preprocess state before packaging
     def preprocess(self, state) :
         result = list(state['board'][:])
@@ -110,6 +116,7 @@ class DQN:
     def predict(self, inputs):
         return self.model(torch.from_numpy(inputs).float())
 
+    # function to get the next action of our model 
     def get_action(self, state, epsilon):
         # if we explore select a random available column
         if np.random.random() < epsilon:
