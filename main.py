@@ -2,9 +2,8 @@ import pygame
 from tkinter import *
 from tkinter import messagebox
 from button import Button
+from _game_utils import Piece, PlayerInput,get_font
 from optionbox import OptionBox
-from dataclasses import dataclass
-
 import math 
 import numpy as np
 import sys
@@ -17,7 +16,7 @@ import torch
 pygame.init()
 
 # GUI VARIABLES
-scale_factor = 0.8125
+scale_factor = 0.8125 # (13/16)
 BOARD_DIMENSIONS = (7,6) # columns, rows
 DISPLAY_DIMENSION = 1024*scale_factor, 1024*scale_factor
 COLUMN_WIDTH = DISPLAY_DIMENSION[0]*scale_factor/7
@@ -52,23 +51,6 @@ PIECE_DIMENSIONS = PIECE_IMAGES[1].get_width(), PIECE_IMAGES[1].get_height()
 BOARD_IMAGE_tmp = pygame.image.load('Assets/board_image.png')
 BOARD_IMAGE = pygame.transform.scale(BOARD_IMAGE_tmp, (BOARD_IMAGE_tmp.get_width()*scale_factor, BOARD_IMAGE_tmp.get_height()*scale_factor))
 
-
-@dataclass
-class Piece:
-    turn: int
-    coords: tuple
-
-@dataclass
-class PlayerInput:
-    input_rect: pygame.Rect
-    player_select: OptionBox
-    color: pygame.Color
-    active: bool
-    player_text: str
-    selected: int
-
-def get_font(size):
-    return pygame.font.Font("assets/font.ttf", size)
 
 class Game():
     def __init__(self) -> None:
