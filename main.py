@@ -130,8 +130,8 @@ class Game():
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'Agent':
             agent = DQN(name, turn, number)
-            agent.load_weights("weights_01_05_2024_14_01_48.pth")
-            agent.load_optimizer("test.pth")
+            agent.load_weights("weights_01_05_2024_21_36_36__final.pth")
+            #agent.load_optimizer("test.pth")
             return agent
 
     def main(self, p1, p2):
@@ -178,7 +178,7 @@ class Game():
 
                 elif current_player.__class__.__name__ == "DQN":
                     observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
-                    
+                    print(self.BOARD_ARRAY_CHECK.flatten())
                     # actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy()
                     actions = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
                     # print(current_player.optimizer.state_dict())
