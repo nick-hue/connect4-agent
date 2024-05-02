@@ -94,15 +94,15 @@ class DQN:
         self.model.load_state_dict(TrainNet.model.state_dict())
 
     def save_weights(self, path):
-        torch.save(self.model.state_dict(), path)
+        torch.save({'model':self.model.state_dict(),'optimizer':self.optimizer.state_dict()}, path)
 
     def load_weights(self, path):
-        #checkpoint = torch.load(path)
-        loaded = torch.load(path)['optimizer']
-        print("Loaded", loaded)
+        checkpoint = torch.load(path)
+        print("Loaded")
+        print(checkpoint['optimizer'])
 
-        self.model.load_state_dict(torch.load(path)['model'])
-        #self.optimizer.load_state_dict(checkpoint['optimizer'])
+        self.model.load_state_dict(checkpoint['model'])
+        self.optimizer.load_state_dict(checkpoint['optimizer'])
 
     def load_optimizer(self, path):
         self.optimizer.load_state_dict(torch.load(path))

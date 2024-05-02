@@ -139,11 +139,11 @@ class Game():
         turn = 1
         player_turn = random.choice((-1,1))
 
-        # player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
-        # player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
+        player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
+        player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
         
-        player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
-        player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
+        # player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
+        # player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
 
         playing_string = f"{p1.player_text}-{PLAYER_TYPES[p1.selected]} VS {p2.player_text}-{PLAYER_TYPES[p2.selected]}"
         print(playing_string)
