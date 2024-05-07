@@ -8,7 +8,7 @@ import math
 import numpy as np
 import sys
 import random
-
+from test_sub import my_agent
 from players.Bot import HumanPlayer, BotPlayer
 from players.dqn_agent import DQN
 import torch
@@ -178,16 +178,21 @@ class Game():
 
                 elif current_player.__class__.__name__ == "DQN":
                     observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
-                    print(self.BOARD_ARRAY_CHECK.flatten())
-                    # actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy()
-                    actions = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
-                    # print(current_player.optimizer.state_dict())
+                    configuration = {'columns':7}
 
-                    print(actions)
-                    for i in range(len(actions)) :
-                        if observation['board'][i] != 0 :
-                            actions[i] = -1e7
-                    col = int(np.argmax(actions))
+                    #print(self.BOARD_ARRAY_CHECK.flatten())
+                    # actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy()
+                    # actions = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
+                    # # print(current_player.optimizer.state_dict())
+                    # #
+
+                    # print(actions)
+                    col = my_agent(observation=observation, configuration=configuration)
+                    print(col)
+                    # for i in range(len(actions)) :
+                    #     if observation['board'][i] != 0 :
+                    #         actions[i] = -1e7
+                    # col = int(np.argmax(actions))
                     self.place_piece(turn, col)
                     turn = -turn
 
