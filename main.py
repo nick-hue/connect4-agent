@@ -1,16 +1,16 @@
 import pygame 
 from tkinter import *
 from tkinter import messagebox
-from _game_utils import Piece, PlayerInput, get_font, Button
-from optionbox import OptionBox
+from _game_utils import Piece, PlayerInput, get_font, Button, OptionBox
+
 import math 
 import numpy as np
 import sys
 import random
 
+from submission import my_agent
 from players.Bot import HumanPlayer, BotPlayer
 from players.dqn_agent import DQN
-import torch
 
 pygame.init()
 
@@ -71,9 +71,7 @@ class Game():
 
     def place_piece(self, turn, col):
         sum_col = sum(self.BOARD_ARRAY[:, col])
-    
         y_row = -1
-
         if sum_col == 0:
             y_row = self.BOARD_ARRAY.shape[0]-1
         else:
@@ -138,11 +136,11 @@ class Game():
         turn = 1
         player_turn = random.choice((-1,1))
 
-        # player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
-        # player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
+        player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
+        player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
         
-        player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
-        player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
+        # player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
+        # player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
 
         playing_string = f"{p1.player_text}-{PLAYER_TYPES[p1.selected]} VS {p2.player_text}-{PLAYER_TYPES[p2.selected]}"
         print(playing_string)
@@ -181,17 +179,17 @@ class Game():
                     # print(self.BOARD_ARRAY_CHECK.flatten())
                     # actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy() 
 
-                    # configuration = {'columns':7}
-                    # col = my_agent(observation=observation, configuration=configuration)
-                    # print(col)
+                    configuration = {'columns':7}
+                    col = my_agent(observation=observation, configuration=configuration)
+                    print(col)
                     
-                    actions = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
-                    # print(actions)
+                    # actions = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
+                    # # print(actions)
 
-                    for i in range(len(actions)) :
-                        if observation['board'][i] != 0 :
-                            actions[i] = -1e7
-                    col = int(np.argmax(actions))
+                    # for i in range(len(actions)) :
+                    #     if observation['board'][i] != 0 :
+                    #         actions[i] = -1e7
+                    # col = int(np.argmax(actions))
                     self.place_piece(turn, col)
                     turn = -turn
 
