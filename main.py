@@ -139,11 +139,11 @@ class Game():
         turn = 1
         player_turn = random.choice((-1,1))
 
-        player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
-        player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
+        # player_1 = self.get_player_class("Human", "Nikos", player_turn, 1)
+        # player_2 = self.get_player_class("Agent", "Botakis", -player_turn, 2)
         
-        # player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
-        # player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
+        player_1 = self.get_player_class(PLAYER_TYPES[p1.selected], p1.player_text, player_turn, 1)
+        player_2 = self.get_player_class(PLAYER_TYPES[p2.selected], p2.player_text, -player_turn, 2)
 
         playing_string = f"{p1.player_text}-{PLAYER_TYPES[p1.selected]} VS {p2.player_text}-{PLAYER_TYPES[p2.selected]}"
         print(playing_string)
@@ -178,21 +178,21 @@ class Game():
 
                 elif current_player.__class__.__name__ == "DQN":
                     observation = {'board': self.BOARD_ARRAY_CHECK.flatten(), 'mark': turn}
-                    configuration = {'columns':7}
 
-                    #print(self.BOARD_ARRAY_CHECK.flatten())
-                    # actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy()
-                    # actions = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
-                    # # print(current_player.optimizer.state_dict())
-                    # #
+                    # print(self.BOARD_ARRAY_CHECK.flatten())
+                    # actions = current_player.model(torch.from_numpy(current_player.preprocess(observation)).float()).detach().numpy() 
 
+                    # configuration = {'columns':7}
+                    # col = my_agent(observation=observation, configuration=configuration)
+                    # print(col)
+                    
+                    actions = current_player.predict(np.atleast_2d(current_player.preprocess(observation)))[0].detach().numpy()
                     # print(actions)
-                    col = my_agent(observation=observation, configuration=configuration)
-                    print(col)
-                    # for i in range(len(actions)) :
-                    #     if observation['board'][i] != 0 :
-                    #         actions[i] = -1e7
-                    # col = int(np.argmax(actions))
+
+                    for i in range(len(actions)) :
+                        if observation['board'][i] != 0 :
+                            actions[i] = -1e7
+                    col = int(np.argmax(actions))
                     self.place_piece(turn, col)
                     turn = -turn
 
