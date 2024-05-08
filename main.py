@@ -1,14 +1,13 @@
 import pygame 
 from tkinter import *
 from tkinter import messagebox
-from button import Button
-from _game_utils import Piece, PlayerInput,get_font
+from _game_utils import Piece, PlayerInput, get_font, Button
 from optionbox import OptionBox
 import math 
 import numpy as np
 import sys
 import random
-from test_sub import my_agent
+
 from players.Bot import HumanPlayer, BotPlayer
 from players.dqn_agent import DQN
 import torch
@@ -130,7 +129,7 @@ class Game():
             return BotPlayer(name=name, turn=turn, player_number=number)
         elif class_string == 'Agent':
             agent = DQN(name, turn, number)
-            agent.load_weights("weights_01_05_2024_21_36_36__final.pth")
+            agent.load_weights("weights.pth")
             #agent.load_optimizer("test.pth")
             return agent
 

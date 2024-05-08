@@ -16,10 +16,10 @@ or just
 
 ### After all needed libraries are successfully installed
 
-Unzip "Connect4Agent.zip" file, inside there will be python Notebook called "training_code.ipynb" which contains the code for the training of our agent. This procedure is thoroughly explained inside the notebook.
+Unzip "Connect4Agent.zip" file, inside there will be python Notebook called "training_code.ipynb" which contains the code for the training of our agent. The training procedure is thoroughly explained inside the notebook.
 
 #### Also there is a "main.py" that when all needed dependencies are installed and run via an IDE or like so: 
 
     python main.py
 
-This will boot up the Graphical User Interface where the user can interact with the trained agent, the random bot and play against another human.
+This will boot up the Graphical User Interface where the user can interact with the trained agent, the random bot and play against another human as shown on the gameplay video, "gui_gameplay.mp4".
